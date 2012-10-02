@@ -18,6 +18,7 @@ public enum Carrier {
     VERIZON("@vtext.com", "Verizon"),
     VIRGINMOBILECANADA("@vmobile.ca", "VirginCanada"),
     VIRGINMOBILEUSA("@vmpix.com", "VirginUSA");
+    SPRINT("@messaging.sprintpcs.com", "Sprint")
 
     /**
      * Sets the name and stmp of the carrier.
