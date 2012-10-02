@@ -1,0 +1,26 @@
+#SMTP is all of the outgoing information, required for the plugin to work. Remember to leave the ' ' around the text
+SMTP:
+  #The SMTP host is a valid mail host
+  #to view some go here http://www.arclab.com/products/amlc/list-of-smtp-and-pop3-servers-mailserver-list.html
+  HOST: 'null'
+  #This is the TLS port, most use 587
+  PORT: '587'
+  #The email to log into
+  USERNAME: 'null'
+  #The password associated to the mail
+  PASSWORD: 'null'
+  
+#The contact information, if you don't wish to use eit
+CONTACT:
+  #The email address to send the message to
+  EMAIL:
+    EMAIL_ADDRESS: 'null'
+  #The phone to txt
+  PHONE:
+    #Your carriers name
+    #Here is a list of supported carriers: http://pastebin.com/SBtBj90u
+    # Type your carriers name exactly how you see it on the list.
+    # Not on the list? Leave a comment on my plugins page and I will add support for it
+    CARRIER: 'null'
+    #Your cell phones number in the format 01234567899 (the full number no spaces including country code!! 11 digits long)
+    NUMBER: 'null'

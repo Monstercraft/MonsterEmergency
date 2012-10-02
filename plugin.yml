@@ -1,0 +1,13 @@
+name: MonsterEmergency
+main: org.monstercraft.info.MonsterEmergency
+version: 1.0
+author: Fletch_to_99
+description: A simple way for mods to contact you in an emergency.
+commands:
+  emergency:
+    description: Notify the server owner of an emergency.
+    usage: /emergency (message)
+permissions:
+  monsteremergency.send:
+    description: Allows the player to send a message.
+    default: op
