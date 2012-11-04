@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
@@ -20,7 +19,7 @@ public class JarUtils {
 
     public static boolean extractFromJar(final String fileName,
             final String dest) throws IOException {
-        if (getRunningJarPath() == null) {
+        if (getRunningJar() == null) {
             return false;
         }
         final File file = new File(dest);
@@ -51,12 +50,6 @@ public class JarUtils {
         return false;
     }
 
-    public static URL getJarUrl(final File file) throws IOException {
-        URL url = file.toURI().toURL();
-        url = new URL("jar:" + url.toExternalForm() + "!/");
-        return url;
-    }
-
     private final static void copyInputStream(final InputStream in,
             final OutputStream out) throws IOException {
         try {
@@ -72,15 +65,8 @@ public class JarUtils {
         }
     }
 
-    public static String getRunningJarPath()
-            throws UnsupportedEncodingException {
-        if (!RUNNING_FROM_JAR) {
-            return null; // null if not running from jar
-        }
-        String path = new File(MonsterEmergency.class.getProtectionDomain()
-                .getCodeSource().getLocation().getPath()).getParent();
-        path = URLDecoder.decode(path, "UTF-8");
-        return path;
+    public static URL getJarUrl(final File file) throws IOException {
+        return new URL("jar:" + file.toURI().toURL().toExternalForm() + "!/");
     }
 
     public static JarFile getRunningJar() throws IOException {
@@ -97,22 +83,10 @@ public class JarUtils {
 
     static {
         final URL resource = MonsterEmergency.class.getClassLoader()
-                .getResource(Paths.PLUGIN);
+                .getResource("plugin.yml");
         if (resource != null) {
             RUNNING_FROM_JAR = true;
         }
-    }
-
-    public static final class Paths {
-
-        private static final String JARS = "lib" + File.separator;
-
-        public static final String ACTIVATOR = JARS + "activation";
-
-        public static final String MAILAPI = JARS + "mail.jar";
-
-        private static final String PLUGIN = "plugin.yml";
-
     }
 
 }

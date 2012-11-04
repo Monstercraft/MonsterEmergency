@@ -1,6 +1,6 @@
 name: MonsterEmergency
 main: org.monstercraft.info.MonsterEmergency
-version: 1.0
+version: 1.1
 author: Fletch_to_99
 description: A simple way for mods to contact you in an emergency.
 commands:

@@ -74,13 +74,10 @@ public class MonsterEmergency extends JavaPlugin implements Listener {
                     Bukkit.getServer().getPluginManager().disablePlugin(this);
                     return;
                 }
-                addURL(JarUtils.getJarUrl(lib));
+                addClassPath(JarUtils.getJarUrl(lib));
             }
             getServer().getPluginManager().registerEvents(this, this);
-            try {
-                new Metrics(this).start();
-            } catch (final IOException e) {
-            }
+            new Metrics(this).start();
         } catch (final Exception e) {
             e.printStackTrace();
         }
@@ -149,7 +146,7 @@ public class MonsterEmergency extends JavaPlugin implements Listener {
         return true;
     }
 
-    private void addURL(final URL url) throws IOException {
+    private void addClassPath(final URL url) throws IOException {
         final URLClassLoader sysloader = (URLClassLoader) ClassLoader
                 .getSystemClassLoader();
         final Class<URLClassLoader> sysclass = URLClassLoader.class;
