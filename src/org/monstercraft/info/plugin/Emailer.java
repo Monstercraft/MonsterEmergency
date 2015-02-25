@@ -14,19 +14,35 @@ import javax.mail.internet.MimeMessage;
 
 public class Emailer {
 
+    private class MailAuthenticator extends Authenticator {
+        String user;
+        String pw;
+
+        public MailAuthenticator(final String username, final String password) {
+            super();
+            user = username;
+            pw = password;
+        }
+
+        @Override
+        public PasswordAuthentication getPasswordAuthentication() {
+            return new PasswordAuthentication(user, pw);
+        }
+    }
+
     public boolean sendEmail(final String to, final String subject,
             final String body, final String port, final String host,
             final String username, final String password) {
-        Properties props = System.getProperties();
+        final Properties props = System.getProperties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", host);
         props.put("mail.smtp.user", username);
         props.put("mail.smtp.password", password);
         props.put("mail.smtp.port", "587");
-        Session session = Session.getInstance(props, new MailAuthenticator(
-                username, password));
-        MimeMessage message = new MimeMessage(session);
+        final Session session = Session.getInstance(props,
+                new MailAuthenticator(username, password));
+        final MimeMessage message = new MimeMessage(session);
         try {
             message.setFrom(new InternetAddress(username));
             message.setSender(new InternetAddress(username));
@@ -38,30 +54,15 @@ public class Emailer {
             message.setSubject(subject);
             message.setText(body);
             message.setSentDate(Calendar.getInstance().getTime());
-            Transport transport = session.getTransport("smtp");
+            final Transport transport = session.getTransport("smtp");
             transport.connect(host, username, password);
             Transport.send(message);
             transport.close();
-        } catch (MessagingException e) {
+        } catch (final MessagingException e) {
             e.printStackTrace();
             return false;
         }
         return true;
-    }
-
-    private class MailAuthenticator extends Authenticator {
-        String user;
-        String pw;
-
-        public MailAuthenticator(String username, String password) {
-            super();
-            this.user = username;
-            this.pw = password;
-        }
-
-        public PasswordAuthentication getPasswordAuthentication() {
-            return new PasswordAuthentication(user, pw);
-        }
     }
 
 }

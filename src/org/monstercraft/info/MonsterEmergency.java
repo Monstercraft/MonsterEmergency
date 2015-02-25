@@ -20,11 +20,15 @@ import org.monstercraft.info.plugin.utils.Metrics;
 
 /**
  * This class represents the main plugin. All actions related to the plugin are forwarded by this class
- * 
+ *
  * @author Fletch_to_99 <fletchto99@hotmail.com>
- * 
+ *
  */
 public class MonsterEmergency extends JavaPlugin implements Listener {
+
+    protected static Emailer getEmailer() {
+        return MonsterEmergency.email;
+    }
 
     private static Emailer email;
     protected static String TO;
@@ -33,59 +37,23 @@ public class MonsterEmergency extends JavaPlugin implements Listener {
     protected static String STMP_PORT;
     protected static String STMP_HOST;
     protected static String STMP_USERNAME;
+
     protected static String STMP_PASSWORD;
 
-    @Override
-    public void onEnable() {
-        if (!new File(getDataFolder(), "config.yml").exists()) {
-            saveDefaultConfig();
-            getLogger()
-                    .warning(
-                            ChatColor.DARK_RED
-                                    + "The default config has been generated. Please modify the config.");
-            getLogger().warning("Shutting down plugin...");
-            Bukkit.getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        MonsterEmergency.STMP_HOST = getConfig().getString("SMTP.HOST");
-        MonsterEmergency.STMP_PORT = getConfig().getString("SMTP.PORT");
-        MonsterEmergency.STMP_USERNAME = getConfig().getString("SMTP.USERNAME");
-        MonsterEmergency.STMP_PASSWORD = getConfig().getString("SMTP.PASSWORD");
-        MonsterEmergency.TO = getConfig().getString(
-                "CONTACT.EMAIL.EMAIL_ADDRESS");
-        MonsterEmergency.NUMBER = getConfig().getString("CONTACT.PHONE.NUMBER");
-        MonsterEmergency.CARRIER = CarrierUtils.findCarrier(getConfig()
-                .getString("CONTACT.PHONE.CARRIER"));
+    private void addClassPath(final URL url) throws IOException {
+        final URLClassLoader sysloader = (URLClassLoader) ClassLoader
+                .getSystemClassLoader();
+        final Class<URLClassLoader> sysclass = URLClassLoader.class;
         try {
-            final File[] libs = new File[] {
-                    new File(getDataFolder(), "activation.jar"),
-                    new File(getDataFolder(), "mail.jar") };
-            for (final File lib : libs) {
-                if (!lib.exists()) {
-                    JarUtils.extractFromJar(lib.getName(),
-                            lib.getAbsolutePath());
-                }
-            }
-            for (final File lib : libs) {
-                if (!lib.exists()) {
-                    getLogger().warning(
-                            "There was an error loading MonsterEmergency! Could not find lib: "
-                                    + lib.getName());
-                    Bukkit.getServer().getPluginManager().disablePlugin(this);
-                    return;
-                }
-                addClassPath(JarUtils.getJarUrl(lib));
-            }
-            getServer().getPluginManager().registerEvents(this, this);
-            new Metrics(this).start();
-        } catch (final Exception e) {
-            e.printStackTrace();
+            final Method method = sysclass.getDeclaredMethod("addURL",
+                    new Class[] { URL.class });
+            method.setAccessible(true);
+            method.invoke(sysloader, new Object[] { url });
+        } catch (final Throwable t) {
+            t.printStackTrace();
+            throw new IOException("Error adding " + url
+                    + " to system classloader");
         }
-        MonsterEmergency.email = new Emailer();
-    }
-
-    protected static Emailer getEmailer() {
-        return MonsterEmergency.email;
     }
 
     @Override
@@ -106,39 +74,38 @@ public class MonsterEmergency extends JavaPlugin implements Listener {
             }
             sender.sendMessage(ChatColor.BLUE
                     + "Sending message... This may take a few seconds.");
-            Bukkit.getScheduler().scheduleAsyncDelayedTask(this,
-                    new Runnable() {
-
-                        @Override
-                        public void run() {
-                            boolean mail, txt, either = false;
-                            if (MonsterEmergency.CARRIER != null
-                                    && !MonsterEmergency.NUMBER
-                                            .equalsIgnoreCase("null")) {
-                                txt = EmergencyAPI.sendTextMessage(message);
-                                sender.sendMessage(txt ? ChatColor.GREEN
-                                        + "Text message sent!"
-                                        : ChatColor.RED
-                                                + "Error sending txt! Tell the owner to verify their STMP information on MonsterEmergency!");
-                                either = true;
-                            }
-                            if (!MonsterEmergency.TO.equalsIgnoreCase("null")) {
-                                mail = EmergencyAPI
-                                        .sendMail(
-                                                "There is a minecraft problem - MonsterEmergency",
-                                                message);
-                                sender.sendMessage(mail ? ChatColor.GREEN
-                                        + "Email sent!"
-                                        : ChatColor.RED
-                                                + "Error sending email! Tell the owner to verify their STMP information on MonsterEmergency!");
-                                either = true;
-                            }
-                            if (!either) {
-                                sender.sendMessage(ChatColor.RED
-                                        + "The owner has misconfigured MonsterEmergency. Please notify them.");
-                            }
-                        }
-                    });
+            Bukkit.getScheduler()
+                    .scheduleAsyncDelayedTask(
+                            this,
+                            () -> {
+                                boolean mail, txt, either = false;
+                                if (MonsterEmergency.CARRIER != null
+                                        && !MonsterEmergency.NUMBER
+                                                .equalsIgnoreCase("null")) {
+                                    txt = EmergencyAPI.sendTextMessage(message);
+                                    sender.sendMessage(txt ? ChatColor.GREEN
+                                            + "Text message sent!"
+                                            : ChatColor.RED
+                                                    + "Error sending txt! Tell the owner to verify their STMP information on MonsterEmergency!");
+                                    either = true;
+                                }
+                                if (!MonsterEmergency.TO
+                                        .equalsIgnoreCase("null")) {
+                                    mail = EmergencyAPI
+                                            .sendMail(
+                                                    "There is a minecraft problem - MonsterEmergency",
+                                                    message);
+                                    sender.sendMessage(mail ? ChatColor.GREEN
+                                            + "Email sent!"
+                                            : ChatColor.RED
+                                                    + "Error sending email! Tell the owner to verify their STMP information on MonsterEmergency!");
+                                    either = true;
+                                }
+                                if (!either) {
+                                    sender.sendMessage(ChatColor.RED
+                                            + "The owner has misconfigured MonsterEmergency. Please notify them.");
+                                }
+                            });
         } else if (label.equalsIgnoreCase("emergency")) {
             sender.sendMessage(ChatColor.RED
                     + "You don't have permission to execute this command!");
@@ -146,20 +113,56 @@ public class MonsterEmergency extends JavaPlugin implements Listener {
         return true;
     }
 
-    private void addClassPath(final URL url) throws IOException {
-        final URLClassLoader sysloader = (URLClassLoader) ClassLoader
-                .getSystemClassLoader();
-        final Class<URLClassLoader> sysclass = URLClassLoader.class;
-        try {
-            final Method method = sysclass.getDeclaredMethod("addURL",
-                    new Class[] { URL.class });
-            method.setAccessible(true);
-            method.invoke(sysloader, new Object[] { url });
-        } catch (final Throwable t) {
-            t.printStackTrace();
-            throw new IOException("Error adding " + url
-                    + " to system classloader");
+    @Override
+    public void onEnable() {
+        if (!new File(this.getDataFolder(), "config.yml").exists()) {
+            this.saveDefaultConfig();
+            this.getLogger()
+                    .warning(
+                            ChatColor.DARK_RED
+                                    + "The default config has been generated. Please modify the config.");
+            this.getLogger().warning("Shutting down plugin...");
+            Bukkit.getServer().getPluginManager().disablePlugin(this);
+            return;
         }
+        MonsterEmergency.STMP_HOST = this.getConfig().getString("SMTP.HOST");
+        MonsterEmergency.STMP_PORT = this.getConfig().getString("SMTP.PORT");
+        MonsterEmergency.STMP_USERNAME = this.getConfig().getString(
+                "SMTP.USERNAME");
+        MonsterEmergency.STMP_PASSWORD = this.getConfig().getString(
+                "SMTP.PASSWORD");
+        MonsterEmergency.TO = this.getConfig().getString(
+                "CONTACT.EMAIL.EMAIL_ADDRESS");
+        MonsterEmergency.NUMBER = this.getConfig().getString(
+                "CONTACT.PHONE.NUMBER");
+        MonsterEmergency.CARRIER = CarrierUtils.findCarrier(this.getConfig()
+                .getString("CONTACT.PHONE.CARRIER"));
+        try {
+            final File[] libs = new File[] {
+                    new File(this.getDataFolder(), "activation.jar"),
+                    new File(this.getDataFolder(), "mail.jar") };
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                    JarUtils.extractFromJar(lib.getName(),
+                            lib.getAbsolutePath());
+                }
+            }
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                    this.getLogger().warning(
+                            "There was an error loading MonsterEmergency! Could not find lib: "
+                                    + lib.getName());
+                    Bukkit.getServer().getPluginManager().disablePlugin(this);
+                    return;
+                }
+                this.addClassPath(JarUtils.getJarUrl(lib));
+            }
+            this.getServer().getPluginManager().registerEvents(this, this);
+            new Metrics(this).start();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        MonsterEmergency.email = new Emailer();
     }
 
 }

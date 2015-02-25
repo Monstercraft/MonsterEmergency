@@ -8,7 +8,7 @@ public class CarrierUtils {
         if (name == null) {
             return null;
         }
-        for (Carrier c : Carrier.values()) {
+        for (final Carrier c : Carrier.values()) {
             if (c.getName().equalsIgnoreCase(name)) {
                 return c;
             }
